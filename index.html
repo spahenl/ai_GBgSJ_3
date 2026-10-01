@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>온라인 쇼핑몰 주문자 정보 입력</title>
+    <meta name="description" content="온라인 쇼핑몰의 사용자 정보(이름, 전화번호, 주소, 이메일)를 입력하고 우편번호 검색 및 실시간 유효성 검증을 지원하는 결제·배송 정보 입력 페이지입니다." />
+    <meta property="og:title" content="온라인 쇼핑몰 주문자 정보 입력" />
+    <meta property="og:description" content="온라인 쇼핑몰의 사용자 정보(이름, 전화번호, 주소, 이메일)를 입력하고 우편번호 검색 및 실시간 유효성 검증을 지원하는 결제·배송 정보 입력 페이지입니다." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Top Navigation Bar -->
+    <header class="mall-header">
+      <div class="header-inner">
+        <div class="brand-wrap">
+          <a href="#" class="brand-logo">ATELIER SEOUL</a>
+          <span class="brand-badge">온라인 스토어</span>
+        </div>
+
+        <nav class="checkout-steps" aria-label="주문 단계">
+          <span class="step">01 장바구니</span>
+          <span class="step-sep">/</span>
+          <span class="step current">02 주문·배송정보</span>
+          <span class="step-sep">/</span>
+          <span class="step">03 결제완료</span>
+        </nav>
+
+        <div class="header-actions">
+          <button type="button" id="btnFillDemo" class="btn-secondary" title="테스트용 예시 데이터를 폼에 자동으로 채웁니다">
+            예시 자동입력
+          </button>
+          <button type="button" id="btnExportExcelHeader" class="btn-excel" title="입력된 사용자 정보를 엑셀(.xlsx) 파일로 즉시 다운로드합니다">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
+            <span>엑셀 다운로드</span>
+          </button>
+          <button type="button" id="btnReset" class="btn-secondary" title="작성 중인 내용을 초기화합니다">
+            초기화
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="main-wrapper">
+      <!-- Title & Intro -->
+      <section class="page-intro">
+        <div class="breadcrumb">스토어 · 주문서 작성 · 배송 정보 등록</div>
+        <h1 class="page-title">주문자 및 배송 정보 입력</h1>
+        <p class="page-desc">정확한 상품 배송을 위해 이름, 휴대전화번호, 주소, 이메일을 올바르게 입력해 주세요.</p>
+      </section>
+
+      <!-- 2-Column Checkout Layout -->
+      <div class="checkout-layout">
+        <!-- Left: Customer Information Form -->
+        <div class="form-column">
+          <form id="orderForm" novalidate>
+            <!-- 1. 주문자 정보 섹션 -->
+            <section class="form-section">
+              <div class="section-header">
+                <h2 class="section-title">주문자 정보</h2>
+                <span class="required-notice"><span class="required-mark">*</span> 필수 입력 항목</span>
+              </div>
+
+              <!-- 이름 (User Name) -->
+              <div class="form-group">
+                <label for="userName" class="form-label">
+                  이름 <span class="required-mark">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="userName" 
+                  name="userName" 
+                  class="input-control" 
+                  placeholder="받으실 분의 실명을 입력하세요 (예: 홍길동)" 
+                  autocomplete="name"
+                  required
+                />
+                <div id="nameError" class="error-hint"></div>
+                <div class="input-tip">실명 미입력 시 본인 확인 및 택배 수령에 제한이 있을 수 있습니다.</div>
+              </div>
+
+              <!-- 전화번호 (User Phone) -->
+              <div class="form-group">
+                <label for="userPhone" class="form-label">
+                  전화번호 (휴대전화) <span class="required-mark">*</span>
+                </label>
+                <input 
+                  type="tel" 
+                  id="userPhone" 
+                  name="userPhone" 
+                  class="input-control input-mono" 
+                  placeholder="010-0000-0000 (숫자만 입력 시 자동 변환)" 
+                  maxlength="13"
+                  autocomplete="tel"
+                  required
+                />
+                <div id="phoneError" class="error-hint"></div>
+                <div class="input-tip">주문 배송 알림톡 및 택배 기사님 배송 안내 SMS가 전송됩니다.</div>
+              </div>
+
+              <!-- 이메일 (User Email) -->
+              <div class="form-group">
+                <label for="userEmail" class="form-label">
+                  이메일 주소 <span class="required-mark">*</span>
+                </label>
+                <div class="email-input-wrap">
+                  <input 
+                    type="email" 
+                    id="userEmail" 
+                    name="userEmail" 
+                    class="input-control" 
+                    placeholder="user@example.com" 
+                    autocomplete="email"
+                    required
+                  />
+                  <select id="emailDomainSelect" class="input-control" aria-label="이메일 도메인 선택">
+                    <option value="direct">직접 입력</option>
+                    <option value="naver.com">@naver.com</option>
+                    <option value="gmail.com">@gmail.com</option>
+                    <option value="daum.net">@daum.net</option>
+                    <option value="kakao.com">@kakao.com</option>
+                  </select>
+                </div>
+                <div id="emailError" class="error-hint"></div>
+                <div class="input-tip">전자 영수증 및 주문 확인 내역서가 이메일로 발송됩니다.</div>
+              </div>
+            </section>
+
+            <!-- 2. 배송지 정보 섹션 -->
+            <section class="form-section">
+              <div class="section-header">
+                <h2 class="section-title">배송지 정보</h2>
+                <label class="checkbox-item">
+                  <input type="checkbox" id="sameAsRecipient" checked />
+                  <span>주문자 정보와 동일</span>
+                </label>
+              </div>
+
+              <!-- 수령인이 주문자와 다를 경우 활성화되는 패널 -->
+              <div id="recipientGroup" class="sub-panel">
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label for="recipientName" class="form-label">
+                      수령인 이름 <span class="required-mark">*</span>
+                    </label>
+                    <input type="text" id="recipientName" class="input-control" placeholder="받는 분 이름" />
+                    <div id="recipientNameError" class="error-hint"></div>
+                  </div>
+                  <div class="form-group">
+                    <label for="recipientPhone" class="form-label">
+                      수령인 연락처 <span class="required-mark">*</span>
+                    </label>
+                    <input type="tel" id="recipientPhone" class="input-control input-mono" placeholder="010-0000-0000" maxlength="13" />
+                    <div id="recipientPhoneError" class="error-hint"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 주소 (우편번호 + 기본주소 + 상세주소) -->
+              <div class="form-group">
+                <label for="zipcode" class="form-label">
+                  우편번호 <span class="required-mark">*</span>
+                </label>
+                <div class="zipcode-wrap">
+                  <input 
+                    type="text" 
+                    id="zipcode" 
+                    name="zipcode" 
+                    class="input-control input-mono" 
+                    placeholder="우편번호" 
+                    readonly 
+                    required
+                  />
+                  <button type="button" id="btnSearchAddress" class="btn-secondary">
+                    우편번호 찾기
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="roadAddress" class="form-label">
+                  기본 주소 <span class="required-mark">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="roadAddress" 
+                  name="roadAddress" 
+                  class="input-control" 
+                  placeholder="우편번호 찾기를 클릭하여 주소를 검색하세요" 
+                  readonly 
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="detailAddress" class="form-label">
+                  상세 주소 <span class="required-mark">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="detailAddress" 
+                  name="detailAddress" 
+                  class="input-control" 
+                  placeholder="동/호수, 층 등 상세 주소를 정확히 입력해주세요 (예: 102동 1403호)" 
+                  autocomplete="address-line2"
+                  required
+                />
+                <div id="addressError" class="error-hint"></div>
+              </div>
+
+              <!-- 배송 요청사항 -->
+              <div class="form-group">
+                <label for="deliveryRequest" class="form-label">배송 요청사항</label>
+                <select id="deliveryRequest" class="input-control">
+                  <option value="부재 시 문 앞에 놓아주세요">부재 시 문 앞에 놓아주세요</option>
+                  <option value="배송 전 미리 연락 바랍니다">배송 전 미리 연락 바랍니다</option>
+                  <option value="경비실에 맡겨주세요">경비실에 맡겨주세요</option>
+                  <option value="택배함에 보관해주세요">택배함에 보관해주세요</option>
+                  <option value="custom">직접 입력</option>
+                </select>
+                <input 
+                  type="text" 
+                  id="customDeliveryRequest" 
+                  class="input-control" 
+                  placeholder="배송 요청사항을 입력하세요 (최대 50자)" 
+                  style="display: none; margin-top: 8px;"
+                  maxlength="50"
+                />
+              </div>
+
+              <!-- 기본 배송지 저장 -->
+              <div class="form-group" style="margin-top: 14px;">
+                <label class="checkbox-item">
+                  <input type="checkbox" id="saveDefaultAddress" checked />
+                  <span>이 배송지를 기본 배송지로 저장합니다</span>
+                </label>
+              </div>
+            </section>
+
+            <!-- 3. 약관 동의 섹션 -->
+            <section class="form-section">
+              <div class="section-header">
+                <h2 class="section-title">약관 동의</h2>
+              </div>
+
+              <div class="terms-item">
+                <label class="checkbox-item">
+                  <input type="checkbox" id="agreePrivacy" required />
+                  <div>
+                    <span class="checkbox-title">[필수] 개인정보 수집 및 이용 동의</span>
+                    <div class="checkbox-desc">이름, 연락처, 주소, 이메일을 통한 주문 처리 및 배송 목적</div>
+                  </div>
+                </label>
+                <button type="button" id="btnOpenPrivacy" class="btn-link">전문보기</button>
+              </div>
+              <div id="privacyError" class="error-hint" style="margin-bottom: 8px;"></div>
+
+              <div class="terms-item">
+                <label class="checkbox-item">
+                  <input type="checkbox" id="agreeOrder" required />
+                  <div>
+                    <span class="checkbox-title">[필수] 주문 상품 및 배송 정보 확인 동의</span>
+                    <div class="checkbox-desc">주문할 상품의 품명, 수량, 가격 및 배송 정보를 명확히 확인하였습니다.</div>
+                  </div>
+                </label>
+              </div>
+              <div id="orderError" class="error-hint" style="margin-bottom: 8px;"></div>
+
+              <div class="terms-item" style="background: none; border-color: transparent;">
+                <label class="checkbox-item">
+                  <input type="checkbox" id="agreeMarketing" />
+                  <div>
+                    <span>[선택] 쇼핑 혜택 및 할인 이벤트 알림 수신 (SMS / 이메일)</span>
+                  </div>
+                </label>
+              </div>
+            </section>
+
+            <!-- 제출 버튼 -->
+            <button type="submit" id="btnSubmit" class="btn-primary">
+              122,000원 결제 및 주문 접수하기
+            </button>
+            <button type="button" id="btnQuickExcel" class="btn-outline" style="width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
+              <span>작성 중인 사용자 정보를 엑셀(.xlsx)로 저장</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Order Summary -->
+        <aside class="summary-column">
+          <div class="summary-container">
+            <!-- Ordered Items List -->
+            <div class="summary-card">
+              <div class="card-title">
+                <span>주문 상품 정보 (2개)</span>
+                <span style="font-size: 11px; color: var(--color-text-muted);">택배 발송</span>
+              </div>
+
+              <div class="order-items-list">
+                <!-- Item 1 -->
+                <div class="order-item">
+                  <img 
+                    src="/src/assets/images/order_item_linen_shirt_1790816874687.jpg" 
+                    alt="프렌치 워시드 리넨 셔츠" 
+                    class="item-thumb"
+                  />
+                  <div class="item-details">
+                    <span class="item-category">CLOTHING</span>
+                    <div class="item-name">프렌치 워시드 리넨 셔츠</div>
+                    <div class="item-option">오트밀 베이지 / L (105)</div>
+                    <div class="item-bottom">
+                      <div class="qty-control">
+                        <button type="button" class="qty-btn" data-id="1" data-action="minus" aria-label="수량 감소">-</button>
+                        <span id="qty-1" class="qty-num">1</span>
+                        <button type="button" class="qty-btn" data-id="1" data-action="plus" aria-label="수량 증가">+</button>
+                      </div>
+                      <span id="item-price-1" class="item-price">79,000원</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="order-item">
+                  <img 
+                    src="/src/assets/images/order_item_ceramic_cup_1790816887483.jpg" 
+                    alt="아틀리에 매트 세라믹 머그" 
+                    class="item-thumb"
+                  />
+                  <div class="item-details">
+                    <span class="item-category">LIVING</span>
+                    <div class="item-name">아틀리에 매트 세라믹 머그</div>
+                    <div class="item-option">초크 화이트 / 350ml</div>
+                    <div class="item-bottom">
+                      <div class="qty-control">
+                        <button type="button" class="qty-btn" data-id="2" data-action="minus" aria-label="수량 감소">-</button>
+                        <span id="qty-2" class="qty-num">2</span>
+                        <button type="button" class="qty-btn" data-id="2" data-action="plus" aria-label="수량 증가">+</button>
+                      </div>
+                      <span id="item-price-2" class="item-price">48,000원</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Price Breakdown -->
+            <div class="summary-card">
+              <div class="card-title">
+                <span>결제 예정 금액</span>
+              </div>
+
+              <div class="price-row">
+                <span>상품 금액</span>
+                <span id="subtotalVal" class="val">127,000원</span>
+              </div>
+              <div class="price-row">
+                <span>배송비 (5만원 이상 무료)</span>
+                <span id="shippingVal" class="val">0원 (무료배송)</span>
+              </div>
+              <div class="price-row discount">
+                <span>첫 구매 회원 특별 할인</span>
+                <span class="val">-5,000원</span>
+              </div>
+
+              <div class="total-row">
+                <span class="total-label">최종 결제 금액</span>
+                <span id="finalTotalVal" class="total-amount">122,000원</span>
+              </div>
+
+              <div class="delivery-badge">
+                <strong>빠른 안심 배송</strong><br />
+                오늘 16:00 이전 결제 시 우체국 및 CJ대한통운으로 당일 출고됩니다.
+              </div>
+            </div>
+
+            <!-- Trust Badge -->
+            <div class="trust-card">
+              <div class="trust-item">
+                <span style="font-weight: 700; color: #10b981;">✓</span>
+                <span>256-bit SSL 암호화 결제 보안</span>
+              </div>
+              <div class="trust-item">
+                <span style="font-weight: 700; color: #10b981;">✓</span>
+                <span>수령 후 7일 이내 안심 교환/반품 보장</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mall-footer">
+      <div class="footer-inner">
+        <div>
+          <strong>ATELIER SEOUL</strong> · 온라인 쇼핑몰<br />
+          서울특별시 강남구 테헤란로 152 | 대표번호: 1544-0000 | 개인정보보호책임자: 홍길동
+        </div>
+        <div>
+          © 2026 ATELIER SEOUL. All rights reserved.
+        </div>
+      </div>
+    </footer>
+
+    <!-- Modal 1: 우편번호 및 주소 검색 모달 -->
+    <div id="addressModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="addrModalTitle">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="addrModalTitle" class="modal-title">우편번호 및 도로명 주소 검색</h3>
+          <button type="button" id="btnCloseAddressModal" class="modal-close" aria-label="닫기">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="search-input-box">
+            <input 
+              type="text" 
+              id="addressSearchInput" 
+              class="input-control" 
+              placeholder="도로명 또는 건물명을 입력하세요 (예: 테헤란로 152, 판교역로)" 
+            />
+          </div>
+          <div style="font-size: 11px; color: var(--color-text-muted); display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+            <span>추천:</span>
+            <button type="button" class="btn-tag-search btn-link">테헤란로</button>
+            <button type="button" class="btn-tag-search btn-link">판교역로</button>
+            <button type="button" class="btn-tag-search btn-link">성수이로</button>
+            <button type="button" class="btn-tag-search btn-link">올림픽로</button>
+          </div>
+          <div id="addressResultList" class="address-result-list"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" onclick="document.getElementById('addressModal').classList.remove('open')" class="btn-outline">
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: 개인정보 수집 및 이용 동의 전문 모달 -->
+    <div id="privacyModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="privModalTitle">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="privModalTitle" class="modal-title">개인정보 수집 및 이용 동의 (필수)</h3>
+          <button type="button" id="btnClosePrivacyModal" class="modal-close" aria-label="닫기">&times;</button>
+        </div>
+        <div class="modal-body" style="font-size: 12px; color: var(--color-text-muted); line-height: 1.6;">
+          <p style="margin-bottom: 12px; font-weight: 600; color: var(--color-text-main);">
+            ATELIER SEOUL은 전자상거래법 등 관련 법령에 의거하여 다음과 같이 고객님의 개인정보를 수집 및 이용합니다.
+          </p>
+          <div style="background-color: var(--color-surface-subtle); border: 1px solid var(--color-border); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <strong>1. 수집 항목</strong><br />
+            - 주문자: 이름, 휴대전화번호, 이메일 주소<br />
+            - 배송지: 수령인 이름, 수령인 연락처, 배송지 주소(우편번호 포함)<br /><br />
+            <strong>2. 수집 및 이용 목적</strong><br />
+            - 주문 계약 이행 및 본인 식별<br />
+            - 주문 상품의 배송 및 배송지 확인, 배송 안내 알림톡 발송<br />
+            - 전자 영수증 및 주문 확인 메일 발송, 고객 상담 및 클레임 처리<br /><br />
+            <strong>3. 보유 및 이용 기간</strong><br />
+            - 전자상거래 등에서의 소비자보호에 관한 법률에 따라 <strong>5년간 보관</strong> 후 안전하게 파기
+          </div>
+          <p style="font-size: 11px;">
+            * 귀하는 위 개인정보 수집 및 이용에 거부할 권리가 있으나, 거부 시 상품 주문 및 배송 서비스가 제한될 수 있습니다.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" onclick="document.getElementById('privacyModal').classList.remove('open')" class="btn-primary" style="width: auto; padding: 8px 18px; font-size: 13px;">
+            확인 및 닫기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 3: 주문 완료 영수증 모달 -->
+    <div id="completeModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="compModalTitle">
+      <div class="modal-dialog">
+        <div class="modal-header" style="background-color: var(--color-primary); color: #fff;">
+          <h3 id="compModalTitle" class="modal-title" style="color: #fff;">✓ 주문 및 사용자 정보 접수 완료</h3>
+          <button type="button" id="btnCloseCompleteModal" class="modal-close" style="color: #fff;" aria-label="닫기">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 13px; color: var(--color-text-muted); text-align: center; margin-bottom: 16px;">
+            입력하신 사용자 정보로 주문 접수가 완료되었습니다.
+          </p>
+
+          <div class="receipt-box">
+            <div class="receipt-row">
+              <span class="receipt-label">주문번호</span>
+              <span id="receiptOrderNum" class="receipt-val font-mono"></span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">주문자 이름</span>
+              <span id="receiptName" class="receipt-val"></span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">전화번호</span>
+              <span id="receiptPhone" class="receipt-val font-mono"></span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">이메일</span>
+              <span id="receiptEmail" class="receipt-val"></span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">받는 분</span>
+              <span id="receiptRecipient" class="receipt-val"></span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">배송지 주소</span>
+              <span id="receiptAddress" class="receipt-val" style="max-width: 65%;"></span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">배송 요청사항</span>
+              <span id="receiptMemo" class="receipt-val"></span>
+            </div>
+            <div class="receipt-row" style="font-size: 14px; font-weight: 700; color: var(--color-primary);">
+              <span>최종 결제 금액</span>
+              <span id="receiptAmount" class="receipt-val"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="btnCopyReceipt" class="btn-outline">
+              영수증 내용 복사
+            </button>
+            <button type="button" id="btnDownloadExcel" class="btn-excel" style="padding: 9px 16px; font-size: 13px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>엑셀(.xlsx) 파일 저장</span>
+            </button>
+          </div>
+          <button type="button" id="btnNewOrder" class="btn-primary" style="width: auto; padding: 9px 18px; font-size: 13px;">
+            새 주문 작성
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="excelToast" class="excel-toast">
+      <div class="excel-toast-icon">✓</div>
+      <span id="excelToastMsg">엑셀 파일이 성공적으로 다운로드되었습니다.</span>
+    </div>
+
+    <!-- Pure Vanilla JavaScript Script -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
